@@ -1,1 +1,33 @@
+name: Update Cydia Packages
+
+on:
+  push:
+    paths:
+      - 'debs/*.deb'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev
+
+      - name: Generate Packages
+        run: |
+          dpkg-scanpackages debs /dev/null > Packages
+          gzip -9kf Packages
+
+      - name: Commit index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Packages Packages.gz
+          git diff --cached --quiet || git commit -m "Update Cydia index"
+          git push
 
